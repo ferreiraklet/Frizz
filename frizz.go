@@ -17,11 +17,11 @@ import (
 func init() {
         flag.Usage = func() {
                 help := []string{
-                        "Airi XSS confirmer",
+                        "Frizz",
                         "",
                         "Usage:",
                         "+=======================================================+",
-                        "       -header           Header value of crlfi payload",
+                        "       -payload          Header value of crlfi payload",
                         "       -H, --headers,    Headers",
                         "       --proxy,      	  Send traffic to a proxy",
                         "       --only-poc        Show only potentially vulnerable urls",
