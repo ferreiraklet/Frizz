@@ -21,9 +21,10 @@ func init() {
                         "",
                         "Usage:",
                         "+=======================================================+",
-                        "       -payload          Header value of crlfi payload",
+                        "       -payload          Header value of crlfi payload"
+                        "       -c                Set Concurrency, Default: 50",
                         "       -H, --headers,    Headers",
-                        "       --proxy,      	  Send traffic to a proxy",
+                        "       --proxy,          Send traffic to a proxy",
                         "       --only-poc        Show only potentially vulnerable urls",
                         "       -h                Show This Help Message",
                         "",
@@ -37,7 +38,6 @@ func init() {
 |  _|  _| |- _|- _|
 |_| |_| |_|___|___|
                    
-
 `)
                 fmt.Fprintf(os.Stderr, strings.Join(help, "\n"))
 
@@ -48,7 +48,9 @@ func init() {
 
 func main() {
 
-
+        var concurrency int
+        flag.IntVar(&concurrency, "c", 50, "")
+        
         var regex string
         flag.StringVar(&regex, "payload","","")
 
@@ -64,53 +66,57 @@ func main() {
 
         flag.Parse()
 
-        var urls []string
+        
         std := bufio.NewScanner(os.Stdin)
-        for std.Scan() {
-                var line string = std.Text()
-                hline := strings.Replace(line, "%2F", "/", -1)
-                line = hline
-                // fmt.Println(line)
-
-                urls = append(urls, line)
-
-        }
+        
+        //buf
+        xd := make(chan string)
         var wg sync.WaitGroup
-        for _, u := range urls {
+
+        for i:=0;i<concurrency;i++ {
                 wg.Add(1)
-                go func(url string) {
+                go func() {
 
                         defer wg.Done()
-                        if proxy != ""{
-                            if headers != ""{
-                                x := checkCrlf(url, regex, proxy, headers, poc)
-                                if x != "ERROR" {
-                                    fmt.Println(x)
-                                                }
-                            }else{
-                                x := checkCrlf(url, regex, proxy, "0", poc)
-                                if x != "ERROR" {
-                                    fmt.Println(x)
-                            }
-                            }
-                        }else{
+                        for urll := range xd{
+
+                            if proxy != ""{
                                 if headers != ""{
-                                    x := checkCrlf(url, regex, "0", headers, poc)
+                                    x := checkCrlf(urll, regex, proxy, headers, poc)
                                     if x != "ERROR" {
                                         fmt.Println(x)
-                                                    }
+                                                }
                                 }else{
-                                        x := checkCrlf(url, regex, "0", "0", poc)
+                                    x := checkCrlf(urll, regex, proxy, "0", poc)
+                                    if x != "ERROR" {
+                                        fmt.Println(x)
+                                            }
+                                            }
+                                    }else{
+                                    if headers != ""{
+                                        x := checkCrlf(urll, regex, "0", headers, poc)
                                         if x != "ERROR" {
                                             fmt.Println(x)
+                                                    }
+                                    }else{
+                                            x := checkCrlf(urll, regex, "0", "0", poc)
+                                            if x != "ERROR" {
+                                                fmt.Println(x)
                                                         }
                                     }
 
                             }
+                        }
 
-                }(u)
+                }()
         }
 
+        for std.Scan() {
+            var line string = std.Text()
+            xd <- line
+
+        }
+        close(xd)
         wg.Wait()
 
 }
