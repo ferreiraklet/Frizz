@@ -21,7 +21,7 @@ func init() {
                         "",
                         "Usage:",
                         "+=======================================================+",
-                        "       -payload          Header value of crlfi payload"
+                        "       -payload          Header value of crlfi payload",
                         "       -c                Set Concurrency, Default: 50",
                         "       -H, --headers,    Headers",
                         "       --proxy,          Send traffic to a proxy",
